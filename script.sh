@@ -25,8 +25,6 @@ while true; do
 
     # 1. 确保 assets 目录存在并清空
     mkdir -p "${ASSETS_DIR}" || { echo "Error: Could not create directory ${ASSETS_DIR}. Skipping iteration."; continue; }
-    echo "Cleaning old files in ${ASSETS_DIR}..."
-    rm -f "${ASSETS_DIR}"/* || { echo "Error: Could not clean directory ${ASSETS_DIR}. Skipping iteration."; continue; }
 
     # 2. 创建随机数量的随机大小文件
     FILE_COUNT=$(shuf -i 1-11 -n 1)
