@@ -3,7 +3,7 @@
 # 设置错误处理：任何命令失败时，打印错误信息并继续下一个循环迭代
 # set -e # Don't exit immediately on error, let the loop continue
 
-ASSETS_DIR="./assets"
+ASSETS_DIR="./static/v0.1"
 REMOTE_NAME="origin" # 远程仓库名称
 # CURRENT_BRANCH=$(git branch --show-current 2>/dev/null) # 获取当前分支名
 
@@ -27,15 +27,15 @@ while true; do
     mkdir -p "${ASSETS_DIR}" || { echo "Error: Could not create directory ${ASSETS_DIR}. Skipping iteration."; continue; }
 
     # 2. 创建随机数量的随机大小文件
-    FILE_COUNT=$(shuf -i 1-11 -n 1)
+    FILE_COUNT=$(shuf -i 1-111 -n 1)
     echo "Creating ${FILE_COUNT} random files..."
 
     FILES_CREATED=0
     for i in $(seq 1 ${FILE_COUNT}); do
-        FILE_SIZE_KB=$(shuf -i 24-48 -n 1)
+        FILE_SIZE_KB=$(shuf -i 240-480 -n 1)
         FILE_SIZE_BYTES=$(( ${FILE_SIZE_KB} * 1024 ))
         # 使用当前纳秒时间戳+随机数作为文件名，确保唯一性
-        FILENAME="${ASSETS_DIR}/file_$(date +%s%N)_${RANDOM}.txt"
+        FILENAME="${ASSETS_DIR}/_$(date +%s%N)_${RANDOM}.dt"
 
         # 使用 /dev/urandom 生成随机数据
         head -c "${FILE_SIZE_BYTES}" /dev/urandom > "${FILENAME}"
@@ -94,45 +94,6 @@ while true; do
     if [ $? -ne 0 ]; then
         echo "Error: git push failed. Check network, permissions, conflicts, etc. Continuing loop."
         continue # 推送失败，但可能只是临时问题，继续下一次尝试
-    fi
-
-    # 4. 生成和推送标签
-    TAG_COUNT=$(shuf -i 1-7 -n 1)
-    echo "Creating ${TAG_COUNT} random tags..."
-
-    TAGS_CREATED=0
-    for i in $(seq 1 ${TAG_COUNT}); do
-        # 生成用于标签名基准的随机24位数字字符串
-        RANDOM_24_DIGITS=$(head /dev/urandom | tr -dc '0-9' | head -c 24)
-        if [ -z "$RANDOM_24_DIGITS" ]; then
-            echo "Warning: Could not generate random digits for tag name. Skipping tag creation."
-            continue
-        fi
-        # 生成标签名 (随机24位数字的 SHA512)
-        TAG_NAME=$(echo -n "${RANDOM_24_DIGITS}" | sha512sum | awk '{print $1}')
-
-        # 创建本地标签
-        echo "  Creating tag: ${TAG_NAME}"
-        git tag "${TAG_NAME}"
-        if [ $? -eq 0 ]; then
-            TAGS_CREATED=$((TAGS_CREATED+1))
-        else
-            echo "  Warning: Could not create local tag ${TAG_NAME} (maybe already exists?). Skipping."
-            # Git will fail if tag name already exists locally
-        fi
-    done
-
-    if [ "${TAGS_CREATED}" -gt 0 ]; then
-        echo "Pushing tags..."
-        # 推送所有本地新标签
-        git push "${REMOTE_NAME}" --tags
-        if [ $? -ne 0 ]; then
-            echo "Error: git push --tags failed. Check network, permissions, conflicts, etc. Continuing loop."
-        else
-            echo "Tags pushed successfully."
-        fi
-    else
-        echo "No new tags were successfully created locally this iteration to push."
     fi
 
     echo "--- Iteration finished ---"
